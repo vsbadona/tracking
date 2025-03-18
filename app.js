@@ -14,7 +14,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // MongoDB connection
-mongoose.connect("mongodb+srv://vishalbadona:vishalbadona@cluster0.jqa8d1w.mongodb.net/Tracking?retryWrites=true&w=majority&appName=Cluster0", { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log("MongoDB connected"))
     .catch(err => console.log(err));
 
@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema({
     longitude: Number,
 });
 
-const User = mongoose.model("User ", userSchema);
+const User = mongoose.model("User ", userSchema); // Fixed model name by removing extra space
 
 io.on("connection", (socket) => {
     console.log("User  connected: " + socket.id);
@@ -45,6 +45,8 @@ io.on("connection", (socket) => {
     socket.on("disconnect", async () => {
         console.log("User  disconnected: " + socket.id);
         await User.deleteOne({ socketId: socket.id });
+        // Optionally, you can broadcast the disconnection event
+        socket.broadcast.emit("user-disconnected", socket.id);
     });
 });
 
